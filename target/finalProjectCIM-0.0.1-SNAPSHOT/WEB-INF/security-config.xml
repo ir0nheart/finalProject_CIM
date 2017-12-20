@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+						http://www.springframework.org/schema/beans/spring-beans.xsd
+	     				http://www.springframework.org/schema/context 
+        					http://www.springframework.org/schema/context/spring-context.xsd
+						http://www.springframework.org/schema/security
+						http://www.springframework.org/schema/security/spring-security.xsd">
+	
+<!-- Component Scan Directory -->	
+	<context:component-scan base-package="cim.*" />
+	
+<!-- This element is used to enable annotation-based security in application   -->
+<global-method-security jsr250-annotations="enabled" pre-post-annotations="enabled" secured-annotations="enabled"/>
+	
+<!-- Spring Security Context Logout Handler bean -->	
+<beans:bean id="securityContextLogoutHandler"
+		class="org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler" />
+	
+<!-- Spring Security Configurations -->	
+	<http auto-config="true" create-session="always" use-expressions="true">
+		
+		<intercept-url pattern="/user/**" access="isAuthenticated()"/>
+		<intercept-url pattern="/admin/**" access="isAuthenticated()" />
+		<intercept-url pattern="/cowner/**" access="isAuthenticated()" />
+		<intercept-url pattern="/insurance/**" access="isAuthenticated()" />
+		<intercept-url pattern="/maintenance/**" access="isAuthenticated()" />
+		<!-- <intercept-url pattern="/secure/**" access="isAuthenticated()"/> -->
+		<intercept-url  pattern="/admin/**" access="hasAuthority('ROLE_ADMIN')" />
+		<intercept-url pattern="/cowner/**" access="hasAuthority('ROLE_CAROWNER')" />
+		<intercept-url pattern="/insurance/**" access="hasAuthority('ROLE_INSURANCE')" />
+		<intercept-url pattern="/maintenance/**" access="hasAuthority('ROLE_MAINTENANCE')" />
+		<intercept-url pattern="/**" access="permitAll" />
+		<form-login
+		   login-page="/Login" 
+		   login-processing-url="/appLogin"
+		   username-parameter="app_username"
+		   password-parameter="app_password"
+		   default-target-url="/user/home"
+		   authentication-failure-url="/Login?error=true"/>
+		<logout 
+		   logout-url="/appLogout" 
+		   logout-success-url="/logout"
+		   invalidate-session="false"
+		   delete-cookies="JSESSIONID"/>  
+		   
+		<!-- Access denied error in Errors page -->
+		<access-denied-handler error-page="/user/error"/>
+		
+		<!-- Show time out page if session is invalid -->
+		<session-management invalid-session-url="/timeout">
+            <concurrency-control max-sessions="-1" error-if-maximum-exceeded="true" />
+        </session-management>       
+	</http>
+	
+	<!--  User Details Service Bean for Security-->
+	<beans:bean name="myAppUserDetailsService"
+	      class="cim.service.MyAppUserDetailsService"/>
+	      
+	<!--  Password Encoder/Decoder Bean for Security-->      
+	<beans:bean name="bcryptEncoder"
+	      class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>	
+	      
+	<!--  User Service Bean used in application-->      
+	<beans:bean name="userService"
+	      class="cim.service.UserService"/>
+	      
+	 <!--  User Service Bean used in application-->   
+	 <beans:bean name="carOwnerService"
+	      class="cim.service.CarOwnerService"/>   
+	      
+	 <!--  User Registration Service Bean used in application-->     
+	<beans:bean name="registerService"
+	      class="cim.service.RegisterService"/>
+	      
+	<!--  Maintenance Bean used in application-->   
+	<beans:bean name="maintenanceCompanyService"
+	      class="cim.service.MaintenanceCompanyService"/> 
+	      
+	<!--  Insurance Company Service Bean used in application-->         
+	<beans:bean name="insuranceCompanyService"
+	      class="cim.service.InsuranceCompanyService"/> 	
+	      
+	<!--  Message Service Bean used in application-->         
+	<beans:bean name="messageService"
+		class="cim.service.MessageService" />      
+	    	      
+			
+	<!--  Authentication Manager uses UserDetailsService and Encoder Bean-->   	  
+	<authentication-manager>
+		<authentication-provider user-service-ref="myAppUserDetailsService">
+		   <password-encoder ref="bcryptEncoder"/>			 
+		</authentication-provider>
+	</authentication-manager>	
+</beans:beans>
